@@ -1,0 +1,204 @@
+# 1. Introduction
+예쁜 옷들은 많습니다. 그러나 예쁘다고 해서 입었을 때 무조건 예쁘진 않습니다. 예쁜 옷이라고 해서 무작정 샀다가 옷장에 옷만 늘어나고 잘 입지 않는 옷들도 생겨납니다. 그렇게 되면 자주 안 입게 되고 처리하기가 곤란한 상황도 올 수 있어 우리는 이 시스템을 만들어 자기가 가지고 있는 옷을 날씨, 취향, 취미, 체형, 장소등 고려해서 나만의 옷장, 옷 추천 처리기능을 만들어 주려고 합니다.
+
+## 1.1. Purpose of Document
+이 프로젝트는 사용자에게 자신의 옷을 정리할 수 있는 옷장을 만들어주고 가진 옷을 조합해주고 자신의 옷을 SNS에 게시할 수 있게 하는 API의 역할을 수행합니다. 딥러닝을 통한 이미지 태깅과 UBCF를 활용해 사용자 맞춤 패션 서비스 제공 
+
+## 1.2. Document Scope
+이 프로젝트는 yolo v3 모델 , Deep lab V3+ 모델, Geolocation API 모델, OpenWeatherMap API 모델, Vuex 모델, Apache Solr 모델, Kakao open sdk 모델을 채택하고 있으면 인터페이스(UI)로는 Figma tool을 사용하려합니다.
+
+## 1.3. Methodology, Tools, and Approach
+데이터 모델 파트에서 날씨는 정형 데이터로 생각한다. 우리가 만들 시스템에서 날씨를 현 시점이 아닌 미래시점으로 예견해야 하기 때문이다.
+
+## 1.4. Acronyms and Abbreviations
+GUI		Graphical User Interface
+SDD		System Design Document
+E-R Diagram	Entity Relation Digram
+SDD		Software Design Description
+DFD		Data Flow Diagram
+DBMS		Data Base Management System
+SRS		Software Requirement Specification
+
+## 1.5. Reference
+([https://www.slideshare.net/peny_mg/sdd-software-des-sample](https://www.slideshare.net/peny_mg/sdd-software-des-sample))
+김연희 / 데이터베이스 개론 : 기초 개념부터 빅 데이터까지 큰 흐름이 보이는 데이터베이스 교과서 / 한빛아케데미(주) / 2013
+
+
+# 3. Logical Architecture
+
+## 3.1. Project process(Software Design Description)
+
+### 3.1.1 member
+* Login
+```
+type : Kakao open sdk -> userAPI -> Login with Kakao Account
+설명 : 로그인 기능을 수행한다.
+기능 1. 로그인 화면 호출
+기능 2. 로그인하기
+흐름 : 로그인 창이 띄워진다 -> 카카오 앱으로 넘어간다 ->  카카오 계정 id , pwd 를 입력한다. -> 로그인 버튼을 클릭하여 계정 정보를 가져온다 -> 메인화면으로 넘어간다.
+예외 흐름 : 회원가입 버튼을 누르면 회원가입 화면으로 넘어간다. 아이디/pw찾기 버튼을 누르면 카카오톡 앱으로 이동 후 수행한다.
+```
+* Join
+```
+type : Kakao open sdk -> userAPI -> add 	
+설명 : app 처음 접속시 호출되는 화면으로 로그인 기능	 
+기능 1 : 회원가입 화면 호출하기
+기능 2 : 회원가입하기
+기능 3 : 아이디 중복 확인하기
+```
+* Find
+```
+type : Kakao open sdk 
+설명 : 특정 회원정보(email, name)을 통해 data base 에 저장된 id 또는 pwd를 찾는다
+기능 1: 찾기 화면 호출
+전제조건 : db에 회원정보가 저장되어있어야 한다.
+흐름 : 로그인 화면에서 id/pw찾기 버튼을 클릭한다
+기능 2 : 회원찾기
+전제조건 : db에 회원정보가 저장되어있어야 한다.
+흐름 :  찾으려는 계정의 email, name을 입력한다 -> 찾기 버튼을 클린한다. -> 이후 email 과 name 을 이용해 id, pwd 를 받아와 전송하고 텍스트로 집어 넣는다.	
+예외흐름 : 공란 체크
+```
+* Edit
+```
+type : kakao open sdk
+설명 : 현재 로그인하고 있는 계정에 대하여 정보를 수정한다.
+기능 1: 내정보 수정 화면으로 이동하기
+기능 2 : 내정보수정
+기능 3 : 탈퇴
+흐름 :  저장된 id 값을 이용해  db에서 계정 정보를 받아온 후 탈퇴를 실행한다.
+이후 로그아웃을 리턴해 세션을 소멸시키고 로그인 화면으로 돌아감
+```
+* Main
+```
+type : Kakao open sdk + ui 
+설명 : App 클릭시 처음 뜨는 화면으로 로그인, 회원가입,  myPage, Home , weather , closet 등 전체 시스템에 대한 내용 뒤에 추가로 기술한다.
+기능 1 : 화면이동
+흐름 : 원하는 frame 클릭한다.
+```
+
+### 3.1.2 Home
+* communication (board)
+```
+type : example -> SNS
+설명 : 게시글을 올려 서로의 패션을 공유하고 좋아요를 누르고 소통할 수 있는 공간
+```
+### 3.1.3 myPage
+* closet
+```
+type : 
+설명 : 내가 가진 옷들을 보여준다. 내가 좋아요한 옷을 보여준다. 추천해준 옷 조합 중 좋아요한 리스트를 보여준다. 내가 사진찍은 옷을 보여준다.
+set_up
+type : 
+설명 : 전반적인 앱 설정도구를 모아둠.
+```
+* camera
+```
+type : Yolo v3 + DeepLabv3+
+설명 : 촬영 기능.
+```
+### 3.1.4 Recommend clothes based on the weather
+* weather
+```
+type : Geolocation API + OpenWeatherMap API
+설명 : 사용자에 위치를 기반으로 현재 날씨를 알려준다.
+기능 1 : 화면상에 오늘에 날씨 이모트를 보여준다.
+기능 2 : 화면상에 온도를 알려준다.
+```
+* weather recommend
+```
+type : OpenWeatherMap API + Apache Solar 
+설명 : 날씨에 맞춰 LTR 학습을 통해 옷을 추천해준다.
+기능 1 : 화면 상에 날씨에 맞는 옷을 추천해줌
+```
+# 5. Data Model
+
+## 5.1. Database Management System Files
+
+### 5.1.1 요구사항 분석 명세서
+```
+1. 어플리케이션에 회원으로 가입하려면 카카오톡 아이디, 비밀번호, 사용자 정보를 입력해야 한다.  
+2. 회원은 카카오톡 아이디로 식별한다.
+3. 로그인이 완료된 후에 메인화면에는 홈, 날씨에 따른 옷 추천, mypage로 분류된다
+4. 홈에서는 다른 사람들의 옷(게시글)을 볼 수 있고 게시글을 업로드 할 수 있다.
+5. 날씨에 따른 옷 추천에서는 사용자의 위치를 받아서 날씨를 받고 날씨 정보와 사용자 정보를 조합해서 옷을 추천해주고 여러 리스트 중에서 마음에 드는게 있다면 저장 할 수 있다.
+6. mypage에서는 카메라 기능을 이용해 옷장을 채울 수 있다.
+7. 또한 저장했던 옷 조합도 볼 수 있다.
+8. 회원은 회원정보를 수정하고 싶을 때 mypage에서 설정에 들어가 사용자 정보를 수정할 수 있으며 회원 탈퇴도 가능하다.
+```
+### 5.1.2. Conceptual Design
+*****
+DBMS 독립적인 개념적 구조 설계
+*****
+* 개체와 속성 추출
+<img width="376" alt="image" src="https://user-images.githubusercontent.com/63581424/205449338-d87b49c0-91df-4407-a1b7-45a69db9ce9a.png">
+*****
+![image](https://user-images.githubusercontent.com/63581424/205449366-d393a5cf-bc86-44b8-aea0-0e2ca090b2ce.png)
+
+### 5.1.3. E-R Diagram
+![image](https://user-images.githubusercontent.com/63581424/205449379-23430c9d-b20c-41af-b950-cef1de0dff5d.png)
+
+### 5.1.4. Logical Design
+* Relation Schema
+![image](https://user-images.githubusercontent.com/63581424/205449433-17cd2ab6-3e6a-4c72-b335-1d9d1c589071.png)
+
+# 7. External Interface Design
+
+## 7.1. Interface Architecture
+
+* 하드웨어 인터페이스
+IOS 앱 클라이언트
+운영체제: iOS13
+개발언어: swift
+안드로이드 앱 클라이언트
+운영체제: android13
+개발언어: c, c++ , java, Rust
+
+* 소프트웨어 인터페이스
+API
+```
+OpenWeatherMAP API
+Geolocation API
+Apache sold (search n index API)
+```	
+라이브러리
+```
+vuex 
+```
+알고리즘
+```
+deeplab
+LTR
+```
+kit
+```
+kakao open SDK
+```	
+dataset
+```
+DeepFashion2
+```
+
+# 9. System Integrity Controls
+
+- ## 데이터 무결성
+### 1. 개체 무결성
+한 엔터티에서 같은 기본키 를 가질 수 없다
+기본 키의 속성이 NULL을 허용할 수 없다. 
+릴레이션에 포함되어 있는 투플들을 유일하게 구별해주고 각 투플에 쉽게 접근 할 수 있도록 릴레이션마다 기본키를 지정하였다.
+기본키를 구성하는 속성 전체나 일부가 널 값이 되면 투플의 유일성을 판단할 수 없기에 우리는 개체 무결성에 의미를 잘 생각하면서 시스템을 구축하겠다.
+
+### 2. 참조 무결성
+외래 키가 참조하는 다른 개체의 기본 키에 해당하는 값
+기본 키 값이거나, NULL 이어야 한다.
+외래키는 다른 릴레이션의 기본키를 참조하는 속성이고 릴레이션 간의 관계를 표현하는 역할을 한다. 
+그런데 외래키가 자신이 참조하는 릴레이션의 기본키와 상관이 없는 값을 가지게 되면 두 릴레이션을 연관시킬 수 없으므 외래키 본래의 의미가 없어진다. 
+그러므로 외래키는 자신이 참조하는 릴레이션에 기본키 값으로 존재하는 값으로 설정하고 구축하겠다.
+
+### 3. 속성 무결성
+속성의 값은 기본값, NULL 여부, 도메인이 지정된 규칙을 준수하겠다.
+
+### 4. 사용자 무결성
+사용자의 의미적 요구사항을 준수하겠다.
+
+### 5. 키 무결성
+한 릴레이션에 같은 키 값을 가진 튜블들을 허용할 수 없는 제약 조건을 준수 하겠다
